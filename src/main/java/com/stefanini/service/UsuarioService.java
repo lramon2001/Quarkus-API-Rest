@@ -57,11 +57,11 @@ public class UsuarioService {
         return usuario;
     }
 
-    public List<Usuario> listBirthDays() {
-        Month mesAtual = LocalDate.now().getMonth();
+    public List<Usuario> listBirthDays(int mounth) {
+        Month mes = Month.of(mounth);
         String query = "SELECT u FROM Usuario u WHERE MONTH(u.dataNascimento) = :mesAtual";
         List<Usuario> usuarios = usuarioRepository.createSimpleQuery(query)
-            .setParameter("mesAtual", mesAtual.getValue())
+            .setParameter("mesAtual", mes.getValue())
             .getResultList();
         return usuarios;
     }

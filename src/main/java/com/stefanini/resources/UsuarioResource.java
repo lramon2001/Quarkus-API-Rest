@@ -57,8 +57,8 @@ public class UsuarioResource {
 
     @GET
     @Path("/aniversarios")
-    public Response getBirthdays(){
-        return Response.status(Response.Status.OK).entity(usuarioService.listBirthDays()).build();
+    public Response getBirthdays(@QueryParam("mes") int mes){
+        return Response.status(Response.Status.OK).entity(usuarioService.listBirthDays(mes)).build();
     }
 
     @GET
