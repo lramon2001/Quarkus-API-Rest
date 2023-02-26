@@ -1,8 +1,7 @@
 package com.stefanini.service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
+
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,8 +11,16 @@ import java.util.Set;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.stefanini.dtos.UsuarioRequest;
+import com.stefanini.dtos.UsuarioResponse;
+import com.stefanini.entity.Login;
 import com.stefanini.entity.ProvedorEmail;
 import com.stefanini.entity.Usuario;
+import com.stefanini.enums.Mes;
+import com.stefanini.enums.MesEnum;
 import com.stefanini.repository.UsuarioRepository;
 import com.stefanini.utils.EmailUtils;
 
@@ -23,10 +30,13 @@ public class UsuarioService {
     @Inject
     UsuarioRepository usuarioRepository;
 
+    Logger logger = LoggerFactory.getLogger(UsuarioService.class);
+
     public Usuario findById(Long id) throws Exception {
         Usuario usuario = usuarioRepository.findById(id);
         if (Objects.isNull(usuario)) {
-            throw new Exception("Usuario não encontrado");
+            logger.error(" O Usuario de id: "+id+" não foi encontrado");
+            throw new RuntimeException();
         }
         return usuario;
     }
@@ -35,52 +45,45 @@ public class UsuarioService {
         return usuarioRepository.listAll();
     }
 
-    public Usuario create(Usuario usuario) {
-        usuario.setDataCriacao(LocalDateTime.now());
-        usuarioRepository.save(usuario);
-        return usuario;
+    public UsuarioResponse create(UsuarioRequest usuario) {
+        return usuarioRepository.save(usuario);
     }
 
     public void delete(Long id) {
+        try{
         usuarioRepository.delete(id);
+        }catch(Exception e){
+            logger.error("Erro ao deletar usuario de id: "+id, e);
+            throw new RuntimeException();
+        }
     }
 
-    public Usuario update(Usuario usuarioNovo, Long id) {
-        Usuario usuario = usuarioRepository.findById(id);
-        usuario.setNome(usuarioNovo.getNome());
-        usuario.setLogin(usuarioNovo.getLogin());
-        usuario.setEmail(usuarioNovo.getEmail());
-        usuario.setSenha(usuarioNovo.getSenha());
-        usuario.setDataNascimento(usuarioNovo.getDataNascimento());
-        usuario.setDataAtualizacao(LocalDateTime.now());
-        usuarioRepository.update(usuario);
-        return usuario;
+    public UsuarioResponse update(UsuarioRequest usuarioNovo, Long id) {
+        return  usuarioRepository.update(usuarioNovo, id);
     }
 
-    public List<Usuario> listBirthDays(int mounth) {
-        Month mes = Month.of(mounth);
-        String query = "SELECT u FROM Usuario u WHERE MONTH(u.dataNascimento) = :mesAtual";
-        List<Usuario> usuarios = usuarioRepository.createSimpleQuery(query)
-            .setParameter("mesAtual", mes.getValue())
-            .getResultList();
-        return usuarios;
+    public List<UsuarioResponse> listBirthDays(int mounth) {
+        return usuarioRepository.listBirthDays(mounth);
     }
 
-    public List<Usuario> listByName(String name) {
-        String query = "SELECT u FROM Usuario u WHERE u.nome LIKE :nome";
-        List<Usuario> usuarios = usuarioRepository.createSimpleQuery(query)
-                .setParameter("nome", "%" + name + "%")
-                .getResultList();
-
-        return usuarios;
+    public List<UsuarioResponse> listByName(String name) {
+        return usuarioRepository.listByName(name);
     }
 
-    public Usuario findByLogin(String login) {
-        String query = "SELECT u FROM Usuario u WHERE u.login = :login";
-        Usuario usuario = (Usuario) usuarioRepository.createSimpleQuery(query)
-                .setParameter("login", login)
-                .getSingleResult();
-        return usuario;
+    public UsuarioResponse findByLogin(String login) {
+        return usuarioRepository.findByLogin(login);
+    }
+
+    public boolean authenticate(Login login) throws Exception {
+     
+        UsuarioResponse usuario = findByLogin(login.getLogin());
+        Usuario usuarioEntity = this.findById(usuario.getId());
+        
+        if (Objects.isNull(usuario)) {
+            logger.info(" O Usuario de login: "+login.getLogin()+" não foi encontrado");
+            throw new RuntimeException();
+        }
+        return usuarioEntity.getSenha().equals(login.getSenha());
     }
 
   
@@ -93,5 +96,15 @@ public class UsuarioService {
         });
         return dominios;
     }
+    public List<Mes> findAllMonths() {
+        List<Mes> meses = new ArrayList<Mes>();
+        List<MesEnum> mesesEnum = List.of(MesEnum.values());
+        mesesEnum.forEach(mesEnum->{
+           meses.add(new Mes(mesEnum.getNumero(), mesEnum.getDescricao()));
+        });
+        return meses;
+    }
+
+    
 
 }

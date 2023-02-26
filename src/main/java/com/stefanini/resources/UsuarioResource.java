@@ -1,6 +1,6 @@
 package com.stefanini.resources;
 
-import com.stefanini.entity.Usuario;
+import com.stefanini.dtos.UsuarioRequest;
 import com.stefanini.service.UsuarioService;
 
 import javax.ws.rs.Path;
@@ -10,6 +10,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.QueryParam;
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -25,7 +26,7 @@ public class UsuarioResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response registerUser(Usuario usuario) {
+    public Response registerUser(@Valid UsuarioRequest usuario) {
         usuarioService.create(usuario);
         return Response.status(Response.Status.CREATED).entity(usuario).build();
     }
@@ -39,7 +40,7 @@ public class UsuarioResource {
 
     @PUT
     @Path("/{id}")
-    public Response updateUser(@PathParam("id") Long id,Usuario usuario){
+    public Response updateUser(@PathParam("id") Long id,@Valid UsuarioRequest usuario){
         usuarioService.update(usuario,id);
         return Response.status(Response.Status.OK).entity(usuario).build();
     }
@@ -56,7 +57,7 @@ public class UsuarioResource {
     }
 
     @GET
-    @Path("/aniversarios")
+    @Path("/aniversariantes")
     public Response getBirthdays(@QueryParam("mes") int mes){
         return Response.status(Response.Status.OK).entity(usuarioService.listBirthDays(mes)).build();
     }
@@ -71,6 +72,12 @@ public class UsuarioResource {
     @Path("/dominios")
     public Response getProviders(){
         return Response.status(Response.Status.OK).entity(usuarioService.findAllEmailproviders()).build();
+    }
+
+    @GET
+    @Path("/meses")
+    public Response getMonths(){
+        return Response.status(Response.Status.OK).entity(usuarioService.findAllMonths()).build();
     }
 
 }
